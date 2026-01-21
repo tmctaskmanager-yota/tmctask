@@ -1,63 +1,33 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TMC AI Task Manager</title>
+    <title>TMC Task Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 min-h-screen flex items-center justify-center">
-
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-slate-800 mb-2">TMC Task AI</h1>
-        <p class="text-slate-500 mb-6 text-sm">頑張る人をハッピーにするタスク管理</p>
-        
-        <input type="text" id="userInput" placeholder="今日のタスクは？" 
-            class="w-full p-3 border border-slate-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        
-        <button onclick="runAI()" id="btn"
-            class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition">
-            AIのアドバイスを聞く
-        </button>
-
-        <div id="output" class="mt-6 p-4 bg-slate-100 rounded-lg hidden text-slate-700 text-sm leading-relaxed">
-            </div>
-    </div>
-
-    <script type="module">
-        // Google AI Studioから取得したSDKを読み込む
-        import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
-
-        // ここにあなたのAPIキーを貼り付けてください
-        const API_KEY = AIzaSyDL8GUvB4_cmhvcbET2hJX819lVB42zTmQ; 
-        const genAI = new GoogleGenerativeAI(API_KEY);
-
-        window.runAI = async () => {
-            const input = document.getElementById('userInput').value;
-            const outputDiv = document.getElementById('output');
-            const btn = document.getElementById('btn');
-
-            if (!input) return alert("タスクを入力してください！");
-
-            // 状態の更新
-            btn.disabled = true;
-            btn.innerText = "考え中...";
-            outputDiv.classList.remove('hidden');
-            outputDiv.innerText = "Geminiが回答を生成しています...";
-
-            try {
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = await model.generateContent(`${input} というタスクについて、TMCのモットー「頑張る人をハッピーに」に沿って、前向きなアドバイスをください。`);
-                const response = await result.response;
-                outputDiv.innerText = response.text();
-            } catch (err) {
-                outputDiv.innerText = "エラー：APIキーが正しいか、または制限にかかっていないか確認してください。";
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "AIのアドバイスを聞く";
-            }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
         }
-    </script>
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
 </body>
 </html>
