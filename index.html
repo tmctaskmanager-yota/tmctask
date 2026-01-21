@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -14,59 +15,19 @@
             background-color: #f8fafc;
         }
     </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@19.0.0",
-        "react-dom": "https://esm.sh/react-dom@19.0.0",
-        "react-dom/client": "https://esm.sh/react-dom@19.0.0/client"
-      }
-    }
-    </script>
+<script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.12.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
 </head>
 <body>
     <div id="root"></div>
-
-    <script type="module">
-        import React, { useState } from 'react';
-        import { createRoot } from 'react-dom/client';
-
-        function App() {
-            return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-4">
-                    <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">TMC</span>
-                        </div>
-                        <h1 className="text-2xl font-bold text-slate-800 mb-1">Task Hub</h1>
-                        <p className="text-slate-500 text-sm mb-6">頑張る人をハッピーに</p>
-                        
-                        <div className="space-y-4">
-                            <input 
-                                type="text" 
-                                placeholder="新しいタスクを入力..." 
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-700"
-                            />
-                            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-200 transition-all active:scale-[0.98]">
-                                タスクを追加
-                            </button>
-                        </div>
-
-                        <div className="mt-8 pt-6 border-t border-slate-100">
-                            <div className="flex justify-between items-center text-sm text-slate-400">
-                                <span>現在 0 件のタスク</span>
-                                <span className="hover:underline cursor-pointer">設定</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // root要素にAppをレンダリングする
-        const container = document.getElementById('root');
-        const root = createRoot(container);
-        root.render(React.createElement(App));
-    </script>
 </body>
 </html>

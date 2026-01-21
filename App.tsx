@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, Trophy, PlusCircle, CheckCircle, Users, Bell, Calendar, AlertTriangle, Clock } from 'lucide-react';
+import { LayoutGrid, Trophy, PlusCircle, CheckCircle, Users, Bell, Calendar, AlertTriangle, Clock, Database } from 'lucide-react';
 import { Task, TaskStatus, Member, RankingData, TaskDifficulty } from './types';
 import { THEME_COLORS, TMCLogo } from './constants';
 
@@ -16,56 +16,16 @@ const INITIAL_MEMBERS: Member[] = [
 const now = Date.now();
 const oneDay = 86400000;
 
-const INITIAL_TASKS: Task[] = [
+const DEFAULT_TASKS: Task[] = [
   { id: 't1', title: '春の新歓チラシ作成', description: '新入生向けの広報用チラシのデザイン', assigneeId: 'm2', assigneeName: '佐藤 花子', difficulty: 3, status: TaskStatus.COMPLETED, createdAt: now - oneDay * 5, completedAt: now - oneDay * 2, dueDate: now - oneDay },
-  { id: 't2', title: '次期定例会議のアジェンダ作成', description: '4月15日の会議用', assigneeId: 'm1', assigneeName: '田中 太郎', difficulty: 1, status: TaskStatus.DOING, createdAt: now - oneDay, dueDate: now + oneDay * 0.5 }, // Soon
-  { id: 't3', title: 'WEBサイトのバグ修正', description: 'トップページのリンク切れ修正', assigneeId: 'm3', assigneeName: '鈴木 一郎', difficulty: 4, status: TaskStatus.PLANNED, createdAt: now - oneDay * 2, dueDate: now - oneDay * 0.5 }, // Overdue
+  { id: 't2', title: '次期定例会議のアジェンダ作成', description: '4月15日の会議用', assigneeId: 'm1', assigneeName: '田中 太郎', difficulty: 1, status: TaskStatus.DOING, createdAt: now - oneDay, dueDate: now + oneDay * 0.5 },
+  { id: 't3', title: 'WEBサイトのバグ修正', description: 'トップページのリンク切れ修正', assigneeId: 'm3', assigneeName: '鈴木 一郎', difficulty: 4, status: TaskStatus.PLANNED, createdAt: now - oneDay * 2, dueDate: now - oneDay * 0.5 },
 ];
 
 const CURRENT_USER_ID = 'm1';
 
-// Components
-const Navbar = () => {
-  const location = useLocation();
-  const isActive = (path: string) => location.pathname === path;
-
-  return (
-    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-2">
-              <TMCLogo className="w-8 h-8" />
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-                TMC TaskHub
-              </span>
-            </Link>
-            <div className="hidden md:flex space-x-4">
-              <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/') ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}>
-                <LayoutGrid className="inline-block w-4 h-4 mr-1 mb-1" />
-                タスク管理
-              </Link>
-              <Link to="/ranking" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ranking') ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}>
-                <Trophy className="inline-block w-4 h-4 mr-1 mb-1" />
-                貢献度ランキング
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-             <div className="flex items-center bg-slate-100 rounded-full px-3 py-1 text-sm font-medium text-slate-700">
-                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] mr-2">T</div>
-                田中 太郎 (代表)
-             </div>
-          </div>
-        </div>
-      </div>
-    </nav>
-  );
-};
-
 // --- Shared Components ---
 
-// Fix: Extract DifficultyBadge to top level to avoid re-creation on every render and for better type handling in JSX lists.
 const DifficultyBadge = ({ level }: { level: number }) => {
   const colors = [
     'bg-green-100 text-green-700 border-green-200',
@@ -77,17 +37,15 @@ const DifficultyBadge = ({ level }: { level: number }) => {
   return <span className={`px-2 py-0.5 text-xs font-bold rounded-full border ${colors[level-1]}`}>難易度 {level}</span>;
 };
 
-// Fix: Extract getDeadlineStatus to top level as a pure helper.
 const getDeadlineStatus = (task: Task) => {
   if (task.status === TaskStatus.COMPLETED || !task.dueDate) return 'normal';
   const now = Date.now();
   const timeLeft = task.dueDate - now;
   if (timeLeft < 0) return 'overdue';
-  if (timeLeft < oneDay * 2) return 'soon'; // Within 48 hours
+  if (timeLeft < oneDay * 2) return 'soon';
   return 'normal';
 };
 
-// Fix: Extract TaskCard to top level. This resolves the error on line 183 where TypeScript complained about 'key' not existing on the prop type.
 const TaskCard = ({ task, isMyTask, onCompleteTask }: { task: Task, isMyTask: boolean, onCompleteTask?: (id: string) => void }) => {
   const status = getDeadlineStatus(task);
   const isOverdue = status === 'overdue';
@@ -163,17 +121,22 @@ const DashboardPage = ({ tasks, members, onAddTask, onCompleteTask }: { tasks: T
           <h1 className="text-2xl font-bold text-slate-800">タスク管理</h1>
           <p className="text-slate-500">自分のタスクを宣言し、団体の進捗を可視化します。</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all font-semibold"
-        >
-          <PlusCircle className="w-5 h-5 mr-2" />
-          タスクを宣言する
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center px-3 py-1 bg-slate-100 text-slate-500 text-[10px] rounded-full border border-slate-200">
+            <Database className="w-3 h-3 mr-1" />
+            ローカルストレージに保存中
+          </div>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-xl shadow-lg hover:bg-blue-700 transition-all font-semibold"
+          >
+            <PlusCircle className="w-5 h-5 mr-2" />
+            タスクを宣言する
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* My Tasks */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-700 flex items-center">
@@ -185,13 +148,11 @@ const DashboardPage = ({ tasks, members, onAddTask, onCompleteTask }: { tasks: T
           <div className="space-y-4">
             {myTasks.length === 0 && <p className="text-slate-400 text-center py-8 border-2 border-dashed rounded-xl">現在宣言しているタスクはありません</p>}
             {myTasks.map(task => (
-              /* Fix: Passing onCompleteTask explicitly to the extracted TaskCard component */
               <TaskCard key={task.id} task={task} isMyTask={true} onCompleteTask={onCompleteTask} />
             ))}
           </div>
         </section>
 
-        {/* All Tasks Feed */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-slate-700 flex items-center">
@@ -221,7 +182,6 @@ const DashboardPage = ({ tasks, members, onAddTask, onCompleteTask }: { tasks: T
         </section>
       </div>
 
-      {/* Declaration Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -251,7 +211,6 @@ const DashboardPage = ({ tasks, members, onAddTask, onCompleteTask }: { tasks: T
                   />
                   <Calendar className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">※空欄の場合は無期限となります</p>
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">詳細 (任意)</label>
@@ -275,10 +234,6 @@ const DashboardPage = ({ tasks, members, onAddTask, onCompleteTask }: { tasks: T
                       {lv}
                     </button>
                   ))}
-                </div>
-                <div className="flex justify-between mt-1 text-[10px] text-slate-400 px-1">
-                  <span>易しい</span>
-                  <span>難しい</span>
                 </div>
               </div>
               <div className="flex gap-4 mt-8">
@@ -329,7 +284,6 @@ const RankingPage = ({ tasks, members }: { tasks: Task[], members: Member[] }) =
         <p className="text-slate-500">タスク量 × 難易度で算出された、今期の活躍ランキングです。</p>
       </div>
 
-      {/* Top 3 Visual */}
       <div className="flex justify-center items-end gap-4 mb-12 px-4">
         {rankingData[1] && (
           <div className="flex flex-col items-center">
@@ -374,12 +328,9 @@ const RankingPage = ({ tasks, members }: { tasks: Task[], members: Member[] }) =
         )}
       </div>
 
-      {/* Full List */}
       <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
         <div className="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
-          <div className="flex items-center space-x-12">
-            <span>順位 / メンバー</span>
-          </div>
+          <span>順位 / メンバー</span>
           <div className="flex items-center space-x-16">
             <span>タスク数</span>
             <span>合計ポイント</span>
@@ -403,11 +354,9 @@ const RankingPage = ({ tasks, members }: { tasks: Task[], members: Member[] }) =
               <div className="flex items-center space-x-12">
                  <div className="text-right w-16">
                     <span className="text-lg font-bold text-slate-700">{data.completedTasksCount}</span>
-                    <span className="text-[10px] text-slate-400 ml-1">件</span>
                  </div>
                  <div className="text-right w-24">
                     <span className="text-2xl font-black text-blue-600">{data.totalScore}</span>
-                    <span className="text-[10px] text-blue-400 ml-1">PTS</span>
                  </div>
               </div>
             </div>
@@ -418,10 +367,69 @@ const RankingPage = ({ tasks, members }: { tasks: Task[], members: Member[] }) =
   );
 };
 
+// --- Navbar ---
+
+const Navbar = () => {
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="flex items-center space-x-2">
+              <TMCLogo className="w-8 h-8" />
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                TMC TaskHub
+              </span>
+            </Link>
+            <div className="hidden md:flex space-x-4">
+              <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/') ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}>
+                <LayoutGrid className="inline-block w-4 h-4 mr-1 mb-1" />
+                タスク管理
+              </Link>
+              <Link to="/ranking" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/ranking') ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'}`}>
+                <Trophy className="inline-block w-4 h-4 mr-1 mb-1" />
+                貢献度ランキング
+              </Link>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+             <div className="flex items-center bg-slate-100 rounded-full px-3 py-1 text-sm font-medium text-slate-700">
+                <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] mr-2">T</div>
+                田中 太郎 (代表)
+             </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
 // --- App Container ---
 
 const AppContent = () => {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from LocalStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('tmc_tasks');
+    if (saved) {
+      setTasks(JSON.parse(saved));
+    } else {
+      setTasks(DEFAULT_TASKS);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to LocalStorage on change
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('tmc_tasks', JSON.stringify(tasks));
+    }
+  }, [tasks, isLoaded]);
 
   const addTask = (taskData: Partial<Task>) => {
     const newTask: Task = {
@@ -444,6 +452,8 @@ const AppContent = () => {
     ));
   };
 
+  if (!isLoaded) return <div className="min-h-screen bg-slate-50 flex items-center justify-center font-bold text-slate-400">Loading...</div>;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <Navbar />
@@ -453,10 +463,6 @@ const AppContent = () => {
           <Route path="/ranking" element={<RankingPage tasks={tasks} members={INITIAL_MEMBERS} />} />
         </Routes>
       </main>
-      
-      {/* Toast Notification for demonstration */}
-      <div className="fixed bottom-4 right-4 z-50 pointer-events-none">
-      </div>
     </div>
   );
 };
